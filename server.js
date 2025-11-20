@@ -1,15 +1,12 @@
 const express = require("express");
 const path = require("path");
 const nodemailer = require("nodemailer");
-const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
 
 // IMPORTANT: Render / Railway will inject PORT dynamically
 const PORT = process.env.PORT || 3000;
-
-app.use(cors());
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
