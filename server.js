@@ -1,27 +1,22 @@
 const express = require("express");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-
-// IMPORTANT: Render / Railway will inject PORT dynamically
 const PORT = process.env.PORT || 3000;
 
-
-// Middleware
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Static files (if you have frontend in /public)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Test endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend!" });
 });
 
-// Nodemailer transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -30,7 +25,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// API route - send consultation email
 app.post("/api/send-consultation", async (req, res) => {
   try {
     const { name, phone, product, address } = req.body;
@@ -48,7 +42,6 @@ app.post("/api/send-consultation", async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-
     res.json({ success: true, message: "Consultation request sent successfully!" });
   } catch (error) {
     console.error("Email error:", error);
@@ -56,7 +49,6 @@ app.post("/api/send-consultation", async (req, res) => {
   }
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
