@@ -1,42 +1,40 @@
 const express = require("express");
 const path = require("path");
 const nodemailer = require("nodemailer");
-require("dotenv").config();
+require("dotenv").config();  // ✅ Load variables from .env
 
 const app = express();
+const PORT = 3000;
 
-// IMPORTANT: Render / Railway will inject PORT dynamically
-const PORT = process.env.PORT || 3000;
-
-// Middleware
+// Middleware to parse form data or JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Static files (if you have frontend in /public)
+// Serve static files (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Test endpoint
+// Example API endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend!" });
 });
 
-// Nodemailer transporter
+// ✅ Nodemailer transporter with env vars
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: "gmail", // change if you use Outlook/Zoho/SMTP
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // from .env
+    pass: process.env.EMAIL_PASS, // from .env
   },
 });
 
-// API route - send consultation email
+// ✅ API endpoint to handle form submission
 app.post("/api/send-consultation", async (req, res) => {
   try {
     const { name, phone, product, address } = req.body;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // company inbox
       subject: "New Consultation Request",
       text: `
         Name: ${name}
@@ -47,15 +45,19 @@ app.post("/api/send-consultation", async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-
-    res.json({ success: true, message: "Consultation request sent successfully!" });
+    res.json({ success: true, message: "✅ Consultation request sent successfully!" });
   } catch (error) {
     console.error("Email error:", error);
-    res.status(500).json({ success: false, message: "Failed to send email" });
+    res.status(500).json({ success: false, message: "❌ Failed to send email" });
   }
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server is running at http://localhost:${PORT}`);
 });
+
+
+
+// to temp server : node server.js
+// in new terminal : ssh -R 80:localhost:3000 serveo.net
