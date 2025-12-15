@@ -1,66 +1,71 @@
 const express = require("express");
-const path = require("path");
 const nodemailer = require("nodemailer");
-require("dotenv").config();  // ✅ Load variables from .env
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware to parse form data or JSON
+// ✅ CORS MUST be before routes
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Serve static files (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname, "public")));
-
-// Example API endpoint
+// Test API
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend!" });
 });
 
-// ✅ Nodemailer transporter with env vars
+// ✅ Nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // change if you use Outlook/Zoho/SMTP
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // from .env
-    pass: process.env.EMAIL_PASS, // from .env
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// ✅ API endpoint to handle form submission
+// Optional but very useful
+transporter.verify((error) => {
+  if (error) {
+    console.error("❌ Mail server error:", error);
+  } else {
+    console.log("✅ Mail server ready");
+  }
+});
+
+// Send consultation mail
 app.post("/api/send-consultation", async (req, res) => {
   try {
     const { name, phone, product } = req.body;
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER, // company inbox
-      subject: "New Consultation Request",
-      text: `
-        Name: ${name}
-        Phone: ${phone}
-        Product: ${product}
-        `
-    };
+    if (!name || !phone || !product) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
 
-    await transporter.sendMail(mailOptions);
-    res.json({ success: true, message: "✅ Consultation request sent successfully!" });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "New Consultation Request",
+      text: `Name: ${name}\nPhone: ${phone}\nProduct: ${product}`,
+    });
+
+    res.json({
+      success: true,
+      message: "Consultation request sent successfully",
+    });
   } catch (error) {
     console.error("Email error:", error);
-    res.status(500).json({ success: false, message: "❌ Failed to send email" });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
 
-// Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server is running at http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
-
-const cors = require("cors");
-app.use(cors());
-
-
-
-
-// to temp server : node server.js
-// in new terminal : ssh -R 80:localhost:3000 serveo.net
