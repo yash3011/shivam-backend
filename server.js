@@ -1,3 +1,4 @@
+// server.js
 const express = require("express");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
@@ -6,12 +7,17 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ CORS MUST be before routes
-app.use(cors());
+// ✅ CORS: Allow only your Firebase frontend
+app.use(cors({
+  origin: "https://shivam-interior.web.app", // Replace with your Firebase URL
+  methods: ["GET", "POST"],
+}));
+
+// ✅ Body parser
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Test API
+// ✅ Test API to check backend is alive
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend!" });
 });
@@ -20,12 +26,12 @@ app.get("/api/hello", (req, res) => {
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // Your Gmail
+    pass: process.env.EMAIL_PASS, // App password or Gmail password
   },
 });
 
-// Optional but very useful
+// Optional: Verify mail server
 transporter.verify((error) => {
   if (error) {
     console.error("❌ Mail server error:", error);
@@ -34,7 +40,7 @@ transporter.verify((error) => {
   }
 });
 
-// Send consultation mail
+// ✅ Send consultation form
 app.post("/api/send-consultation", async (req, res) => {
   try {
     const { name, phone, product } = req.body;
@@ -48,7 +54,7 @@ app.post("/api/send-consultation", async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Send to yourself
       subject: "New Consultation Request",
       text: `Name: ${name}\nPhone: ${phone}\nProduct: ${product}`,
     });
@@ -61,11 +67,12 @@ app.post("/api/send-consultation", async (req, res) => {
     console.error("Email error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Something went wrong. Please try again.",
     });
   }
 });
 
+// ✅ Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
