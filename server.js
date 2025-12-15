@@ -56,6 +56,10 @@ app.listen(PORT, () => {
   console.log(`✅ Server is running at http://localhost:${PORT}`);
 });
 
+const cors = require("cors");
+app.use(cors());
+
+
 
 
 // to temp server : node server.js
